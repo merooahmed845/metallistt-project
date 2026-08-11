@@ -3,8 +3,8 @@
 import { useCart } from '@/context/CartContext'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/utils/supabase/client'
 import Link from 'next/link'
+import { createCheckoutOrder } from './actions'
 
 const EGYPT_GOVERNORATES = [
   { name: 'القاهرة', fee: 60 },
@@ -63,7 +63,7 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (cart.length === 0) return
@@ -71,42 +71,13 @@ const handleSubmit = async (e: React.FormEvent) => {
     setIsSubmitting(true)
 
     try {
-      // جلب المستخدم الحالي لحفظ الطلب باسم حسابه
-      const { data: { user } } = await supabase.auth.getUser()
+      const result = await createCheckoutOrder({
+        items: cart.map(({ id, quantity }) => ({ productId: id, quantity })),
+        ...formData,
+      })
 
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert([{
-            user_id: user ? user.id : 'guest',
-            customer_name: formData.fullName,
-            full_name: formData.fullName,
-            phone: formData.phone,
-            governorate: formData.governorate,
-            address: `${formData.governorate} - ${formData.address}`,
-            notes: formData.notes,
-            transfer_ref: formData.transferRef,
-            total_price: totalPrice + shippingFee,
-            shipping_fee: shippingFee,
-            items: cart,
-            status: 'قيد المعالجة'
-        }])
-        .select()
-        .single()
-
-      if (orderError) throw orderError
-
-      // إدخال تفاصيل المنتجات في جدول order_items إن وجد
-      const itemsToInsert = cart.map(item => ({
-        order_id: orderData.id,
-        product_id: item.id,
-        title: item.title,
-        price: item.price,
-        quantity: item.quantity,
-      }))
-
-      const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert)
-      if (itemsError) {
-        console.warn('تنبيه: لم يتم حفظ order_items تفصيلياً ولكن تم حفظ الطلب الرئيسي:', itemsError.message)
+      if (!result.success) {
+        throw new Error(result.error)
       }
 
       clearCart()

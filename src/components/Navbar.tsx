@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -11,37 +11,50 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
-  const allowedAdminUids = useMemo(() => [
-    '268e585e-8c9d-4ff4-bbbd-57039020b0f6',
-    '36db1ac6-7a44-42f0-aea2-eba29625fd7c'
-  ], [])
-
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUser(user)
-        if (allowedAdminUids.includes(user.id)) {
-          setIsAdmin(true)
-        }
+    let isMounted = true
+
+    const updateUser = async (nextUser: User | null) => {
+      if (!isMounted) return
+
+      setUser(nextUser)
+
+      if (!nextUser) {
+        setIsAdmin(false)
+        return
+      }
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', nextUser.id)
+        .maybeSingle()
+
+      if (isMounted) {
+        setIsAdmin(data?.role === 'admin')
       }
     }
-    checkUser()
+
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      await updateUser(user)
+    }
+
+    void checkUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null
-      setUser(currentUser)
-      if (currentUser && allowedAdminUids.includes(currentUser.id)) {
-        setIsAdmin(true)
-      } else {
-        setIsAdmin(false)
-      }
+      void updateUser(currentUser)
     })
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
-  }, [allowedAdminUids])
+  }, [])
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'المستخدم'
 

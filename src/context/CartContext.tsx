@@ -24,23 +24,26 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   // قراءة الـ localStorage مباشرة في الـ useState كقيم أولية (Lazy Initialization) بدون useEffect للقرأة
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window === 'undefined') return []
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [hasLoadedCart, setHasLoadedCart] = useState(false)
+
+  useEffect(() => {
     const savedCart = localStorage.getItem('metallia_cart')
     if (savedCart) {
       try {
-        return JSON.parse(savedCart)
+        setCart(JSON.parse(savedCart))
       } catch (e) {
         console.error('Failed to parse cart from localStorage', e)
       }
     }
-    return []
-  })
+    setHasLoadedCart(true)
+  }, [])
 
   // حفظ السلة في الـ localStorage فقط عند أي تحديث يحدث على الـ cart
   useEffect(() => {
+    if (!hasLoadedCart) return
     localStorage.setItem('metallia_cart', JSON.stringify(cart))
-  }, [cart])
+  }, [cart, hasLoadedCart])
 
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
     setCart((prevCart) => {

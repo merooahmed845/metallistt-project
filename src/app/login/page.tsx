@@ -12,11 +12,6 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const router = useRouter()
 
-  const ALLOWED_ADMIN_UIDS = [
-    '268e585e-8c9d-4ff4-bbbd-57039020b0f6',
-    '36db1ac6-7a44-42f0-aea2-eba29625fd7c'
-  ]
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
