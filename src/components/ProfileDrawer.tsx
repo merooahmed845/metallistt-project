@@ -64,7 +64,7 @@ export default function ProfileDrawer({ isOpen, onClose, user }: ProfileDrawerPr
             <div className="p-4 flex flex-col gap-2">
               {/* خيار السلة في رأس الخيارات */}
               <Link 
-                href="/checkout" 
+                href="/cart"
                 onClick={onClose}
                 className="flex items-center justify-between px-4 py-3.5 bg-amber-50 rounded-2xl border border-amber-200 font-bold text-slate-900 hover:bg-amber-100 transition-colors"
               >

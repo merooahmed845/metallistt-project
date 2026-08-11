@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 export default function CartPage() {
-  const { cart, removeFromCart, clearCart, totalPrice } = useCart()
+  const { cart, addToCart, decreaseQuantity, removeFromCart, clearCart, totalPrice } = useCart()
   
   // استخدام دالة لتعيين الحالة مرة واحدة بدون استخدام useEffect نهائياً لتجنب تحذيرات الـ Linter
   const [isClient] = useState(() => true)
@@ -62,6 +62,30 @@ export default function CartPage() {
               </div>
 
               <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-slate-100 px-3 py-1.5">
+                  <button
+                    onClick={() => decreaseQuantity(item.id)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-white font-bold text-slate-900 shadow-sm transition-colors hover:bg-red-50 hover:text-red-600"
+                    title="Decrease quantity"
+                  >
+                    -
+                  </button>
+                  <span className="w-6 text-center text-sm font-extrabold text-slate-900">{item.quantity}</span>
+                  <button
+                    onClick={() =>
+                      addToCart({
+                        id: item.id,
+                        title: item.title,
+                        price: item.price,
+                        image: item.image,
+                      })
+                    }
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-white font-bold text-slate-900 shadow-sm transition-colors hover:bg-amber-50 hover:text-amber-600"
+                    title="Increase quantity"
+                  >
+                    +
+                  </button>
+                </div>
                 <span className="font-bold text-lg">{item.price * item.quantity} ج.م</span>
                 <button
                   onClick={() => removeFromCart(item.id)}

@@ -5,8 +5,10 @@ import { supabase } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import ProfileDrawer from './ProfileDrawer'
+import { useCart } from '@/context/CartContext'
 
 export default function Navbar() {
+  const { totalItems } = useCart()
   const [isAdmin, setIsAdmin] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -74,6 +76,15 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          <Link
+            href="/cart"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-gray-100"
+          >
+            <span>🛒</span>
+            <span>السلة</span>
+            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">{totalItems}</span>
+          </Link>
+
           {user ? (
             <div className="flex items-center gap-3">
               <span className="text-sm font-bold text-slate-800 hidden sm:inline">{displayName}</span>

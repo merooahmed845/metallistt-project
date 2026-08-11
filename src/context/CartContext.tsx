@@ -21,6 +21,35 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
+const CART_STORAGE_KEY = 'metallia_cart'
+
+function isValidCartItem(value: unknown): value is CartItem {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+
+  const item = value as Record<string, unknown>
+  return (
+    typeof item.id === 'string' &&
+    item.id.trim().length > 0 &&
+    typeof item.title === 'string' &&
+    typeof item.price === 'number' &&
+    Number.isFinite(item.price) &&
+    typeof item.quantity === 'number' &&
+    Number.isInteger(item.quantity) &&
+    item.quantity > 0 &&
+    (item.image === undefined || typeof item.image === 'string')
+  )
+}
+
+function readCartFromStorage(value: string | null): CartItem[] {
+  if (!value) return []
+
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter(isValidCartItem) : []
+  } catch {
+    return []
+  }
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   // قراءة الـ localStorage مباشرة في الـ useState كقيم أولية (Lazy Initialization) بدون useEffect للقرأة
@@ -28,21 +57,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [hasLoadedCart, setHasLoadedCart] = useState(false)
 
   useEffect(() => {
-    const savedCart = localStorage.getItem('metallia_cart')
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart))
-      } catch (e) {
-        console.error('Failed to parse cart from localStorage', e)
+    setCart(readCartFromStorage(localStorage.getItem(CART_STORAGE_KEY)))
+    setHasLoadedCart(true)
+  }, [])
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === CART_STORAGE_KEY) {
+        setCart(readCartFromStorage(event.newValue))
       }
     }
-    setHasLoadedCart(true)
+
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
   // حفظ السلة في الـ localStorage فقط عند أي تحديث يحدث على الـ cart
   useEffect(() => {
     if (!hasLoadedCart) return
-    localStorage.setItem('metallia_cart', JSON.stringify(cart))
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
   }, [cart, hasLoadedCart])
 
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
