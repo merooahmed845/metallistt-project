@@ -1,6 +1,6 @@
 'use client'
 
-import { useCart } from '@/context/CartContext'
+import { MAX_CART_QUANTITY, useCart } from '@/context/CartContext'
 
 interface Product {
   id: string
@@ -59,7 +59,8 @@ export default function AddToCartButton({ product }: { product: Product }) {
 
       <button
         onClick={handleAdd}
-        className="w-7 h-7 bg-white rounded-lg shadow-sm flex items-center justify-center font-bold text-slate-900 hover:bg-amber-50 hover:text-amber-600 transition-colors cursor-pointer"
+        disabled={quantity >= MAX_CART_QUANTITY}
+        className="w-7 h-7 bg-white rounded-lg shadow-sm flex items-center justify-center font-bold text-slate-900 hover:bg-amber-50 hover:text-amber-600 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
         title="زيادة الكمية"
       >
         +

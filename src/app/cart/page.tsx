@@ -1,6 +1,6 @@
 'use client'
 
-import { useCart } from '@/context/CartContext'
+import { MAX_CART_QUANTITY, useCart } from '@/context/CartContext'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -80,7 +80,8 @@ export default function CartPage() {
                         image: item.image,
                       })
                     }
-                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-white font-bold text-slate-900 shadow-sm transition-colors hover:bg-amber-50 hover:text-amber-600"
+                    disabled={item.quantity >= MAX_CART_QUANTITY}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-white font-bold text-slate-900 shadow-sm transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
                     title="Increase quantity"
                   >
                     +

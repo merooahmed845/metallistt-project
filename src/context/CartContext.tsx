@@ -22,6 +22,7 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 const CART_STORAGE_KEY = 'metallia_cart'
+export const MAX_CART_QUANTITY = 1000
 
 function isValidCartItem(value: unknown): value is CartItem {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
@@ -45,7 +46,21 @@ function readCartFromStorage(value: string | null): CartItem[] {
 
   try {
     const parsed = JSON.parse(value)
-    return Array.isArray(parsed) ? parsed.filter(isValidCartItem) : []
+    if (!Array.isArray(parsed)) return []
+
+    const cartByProductId = new Map<string, CartItem>()
+    for (const item of parsed.filter(isValidCartItem)) {
+      const existingItem = cartByProductId.get(item.id)
+      cartByProductId.set(item.id, {
+        ...item,
+        quantity: Math.min(
+          MAX_CART_QUANTITY,
+          (existingItem?.quantity ?? 0) + item.quantity
+        ),
+      })
+    }
+
+    return Array.from(cartByProductId.values())
   } catch {
     return []
   }
@@ -82,10 +97,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart((prevCart) => {
       const existingIndex = prevCart.findIndex((item) => item.id === product.id)
       if (existingIndex > -1) {
+        if (prevCart[existingIndex].quantity >= MAX_CART_QUANTITY) return prevCart
+
         const newCart = [...prevCart]
         newCart[existingIndex] = {
           ...newCart[existingIndex],
-          quantity: newCart[existingIndex].quantity + 1,
+          quantity: Math.min(MAX_CART_QUANTITY, newCart[existingIndex].quantity + 1),
         }
         return newCart
       } else {
