@@ -72,6 +72,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [hasLoadedCart, setHasLoadedCart] = useState(false)
 
   useEffect(() => {
+    // The initial storage read intentionally happens after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCart(readCartFromStorage(localStorage.getItem(CART_STORAGE_KEY)))
     setHasLoadedCart(true)
   }, [])
