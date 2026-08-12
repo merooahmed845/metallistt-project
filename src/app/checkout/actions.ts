@@ -81,6 +81,17 @@ export async function createCheckoutOrder(input: CheckoutInput): Promise<Checkou
         return { success: false, error: 'توجد كمية غير صالحة في الطلب.' }
       case 'INVALID_GOVERNORATE':
         return { success: false, error: 'المحافظة المختارة غير صالحة.' }
+        case 'INSUFFICIENT_STOCK':
+  return {
+    success: false,
+    error: 'الكمية المطلوبة من أحد المنتجات غير متوفرة حالياً.',
+  };
+
+case 'DUPLICATE_PRODUCT':
+  return {
+    success: false,
+    error: 'يوجد منتج مكرر في الطلب.',
+  };
       default:
         console.error('Checkout order creation failed:', error)
         return { success: false, error: 'تعذر حفظ الطلب. يرجى المحاولة مرة أخرى.' }

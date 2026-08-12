@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/utils/supabase/client'
 
 interface OrderItem {
@@ -84,9 +84,11 @@ export default function AdminOrdersPage() {
     }
   }
 
-  if (!fetched && !loading) {
-    fetchOrders()
-  }
+  useEffect(() => {
+    // Initial fetch synchronizes this client page with the remote order list.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchOrders()
+  }, [])
 
   // دالة لتحديد شكل ولون الـ Badge بناءً على حالة الأوردر
   const getStatusBadge = (status: string) => {

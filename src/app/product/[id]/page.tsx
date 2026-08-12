@@ -1,4 +1,4 @@
-import { supabase } from '@/utils/supabase/client'
+import { createClient } from '@/utils/supabase/server'
 import Image from 'next/image'
 import AddToCartButton from './AddToCartButton'
 import Link from 'next/link'
@@ -6,6 +6,7 @@ interface Props { params: Promise<{ id: string }> }
 interface Review { id: string; user_name: string; rating: number; comment: string; created_at: string }
 export default async function ProductPage({ params }: Props) {
   const { id } = await params
+  const supabase = await createClient()
   const { data: product, error } = await supabase.from('products').select('*').eq('id', id).single()
   const { data: reviews } = await supabase.from('reviews').select('*').eq('product_id', id).order('created_at', { ascending: false })
   if (error || !product) return <main dir="rtl" className="flex min-h-screen flex-col items-center justify-center px-4 text-center"><h1 className="mb-2 text-2xl font-bold">عذراً، المنتج غير موجود!</h1><p className="mb-6 text-gray-500">قد يكون تم حذف هذا المنتج أو أن الرابط غير صحيح.</p><Link href="/" className="rounded-xl bg-slate-900 px-6 py-3 font-bold text-white">العودة للرئيسية</Link></main>

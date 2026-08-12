@@ -131,6 +131,16 @@ try {
 
 const checkoutPreviewTotal = totalPrice + shippingFee
 
+if (cart.length === 0 && !orderSuccess) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 text-gray-900" dir="rtl">
+      <h1 className="text-3xl font-extrabold mb-4">السلة فارغة</h1>
+      <p className="text-gray-600 mb-6">أضف منتجات إلى السلة قبل إتمام الطلب.</p>
+      <Link href="/" className="rounded-xl bg-amber-500 px-6 py-3 font-bold text-slate-950">العودة للتسوق</Link>
+    </div>
+  )
+}
+
 if (orderSuccess && orderResult) {
 return (
 <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 text-gray-900" dir="rtl" >
