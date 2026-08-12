@@ -60,6 +60,6 @@ export default function Navbar() {
         </div>}
       </div>
     </nav>
-    <ProfileDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} user={user} />
+    <ProfileDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} user={user} isAdmin={isAdmin} />
   </>
 }

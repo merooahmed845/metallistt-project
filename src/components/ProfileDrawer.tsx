@@ -7,9 +7,9 @@ import type { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
 
-interface ProfileDrawerProps { isOpen: boolean; onClose: () => void; user: User | null }
+interface ProfileDrawerProps { isOpen: boolean; onClose: () => void; user: User | null; isAdmin: boolean }
 
-export default function ProfileDrawer({ isOpen, onClose, user }: ProfileDrawerProps) {
+export default function ProfileDrawer({ isOpen, onClose, user, isAdmin }: ProfileDrawerProps) {
   const router = useRouter()
   const { totalItems } = useCart()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -40,6 +40,7 @@ export default function ProfileDrawer({ isOpen, onClose, user }: ProfileDrawerPr
             <hr className="my-1 border-gray-100" />
             <Link href="/my-orders" onClick={onClose} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-slate-700 hover:bg-gray-100 transition-colors"><span aria-hidden="true">📦</span><span>طلباتي</span></Link>
             <Link href="/wishlist" onClick={onClose} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-slate-700 hover:bg-gray-100 transition-colors"><span aria-hidden="true">❤️</span><span>المفضلة</span></Link>
+            {isAdmin && <Link href="/admin" onClick={onClose} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-slate-700 hover:bg-gray-100 transition-colors"><span aria-hidden="true">⚙️</span><span>لوحة تحكم الأدمن</span></Link>}
           </div>
         </div>
         <div className="p-4 border-t border-gray-100 bg-gray-50"><button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 border border-red-200 py-3.5 px-4 rounded-2xl font-bold hover:bg-red-100 transition-colors cursor-pointer"><span aria-hidden="true">🚪</span><span>تسجيل الخروج</span></button></div>
