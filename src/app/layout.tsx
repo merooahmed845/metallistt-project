@@ -8,7 +8,7 @@ import { WishlistProvider } from '@/context/WishlistContext'
 const cairo = Cairo({ subsets: ['arabic'], weight: ['300', '400', '600', '700', '900'] })
 
 export const metadata: Metadata = {
-  title: 'Metallitt - متجر الإكسسوارات العصري',
+  title: 'Metallia - ميتاليا | متجر الإكسسوارات العصري',
   description: 'وجهتك الأولى لأفضل المنتجات والإكسسوارات العصرية بأعلى جودة وأفضل الأسعار.',
 }
 
