@@ -12,12 +12,7 @@ interface Category {
   productCount: number;
 }
 
-const slugify = (value: string) =>
-  value
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\u0600-\u06FF-]+/g, "");
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -118,10 +113,15 @@ export default function AdminCategoriesPage() {
     event.preventDefault();
 
     const cleanName = name.trim();
-    const cleanSlug = slug.trim() || slugify(cleanName);
+    const cleanSlug = slug.trim();
 
-    if (!cleanName || !cleanSlug) {
+    if (!cleanName) {
       alert("اسم التصنيف لا يمكن أن يكون فارغاً.");
+      return;
+    }
+
+    if (!SLUG_PATTERN.test(cleanSlug)) {
+      alert("الـSlug يجب أن يحتوي على حروف إنجليزية صغيرة وأرقام وشرطة (-) فقط.");
       return;
     }
 
@@ -134,6 +134,22 @@ export default function AdminCategoriesPage() {
         image_url: imageUrl.trim() || null,
       };
 
+      const { data: duplicateCategory, error: duplicateError } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", cleanSlug)
+        .neq("id", editing?.id ?? "00000000-0000-0000-0000-000000000000")
+        .maybeSingle();
+
+      if (duplicateError) {
+        throw duplicateError;
+      }
+
+      if (duplicateCategory) {
+        alert("هذا الـSlug مستخدم بالفعل، اختر Slug آخر.");
+        return;
+      }
+
       const result = editing
         ? await supabase.from("categories").update(values).eq("id", editing.id)
         : await supabase.from("categories").insert(values);
@@ -141,7 +157,7 @@ export default function AdminCategoriesPage() {
       if (result.error) {
         alert(
           result.error.code === "23505"
-            ? "اسم أو رابط التصنيف مستخدم بالفعل."
+            ? "هذا الـSlug مستخدم بالفعل، اختر Slug آخر."
             : "تعذر حفظ التصنيف.",
         );
         return;
@@ -218,9 +234,6 @@ export default function AdminCategoriesPage() {
 
                     setName(value);
 
-                    if (!editing) {
-                      setSlug(slugify(value));
-                    }
                   }}
                   required
                   className="mt-1 w-full rounded-xl border px-4 py-2.5 font-normal"
@@ -233,6 +246,8 @@ export default function AdminCategoriesPage() {
                   value={slug}
                   onChange={(event) => setSlug(event.target.value)}
                   required
+                  pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                  title="استخدم حروفاً إنجليزية صغيرة وأرقاماً وشرطة (-) فقط."
                   className="mt-1 w-full rounded-xl border px-4 py-2.5 font-normal"
                 />
               </label>
