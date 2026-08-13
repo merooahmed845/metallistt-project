@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import Image from 'next/image'
 import Link from 'next/link'
 import ProfileDrawer from './ProfileDrawer'
 import { useCart } from '@/context/CartContext'
@@ -38,7 +39,7 @@ export default function Navbar() {
   return <>
     <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-3 shadow-xs" dir="rtl">
       <div className="flex items-center gap-3 sm:gap-6 min-w-0">
-        <Link href="/" className="font-black text-xl text-slate-900 shrink-0">Metallia - ميتاليا</Link>
+        <Link href="/" className="flex shrink-0 items-center gap-2 font-black text-xl text-slate-900"><Image src="/logo.png" alt="Metallia" width={37} height={20} className="h-5 w-auto" />Metallia - ميتاليا</Link>
         {isAdmin && <div className="hidden lg:flex items-center gap-4 bg-amber-50 px-3.5 py-1.5 rounded-xl border border-amber-200 shadow-2xs">
           <span className="text-xs font-bold text-amber-800">لوحة التحكم:</span>
           <Link href="/admin/products" className="text-sm font-bold text-slate-800 hover:text-amber-600 transition-colors">إدارة المنتجات</Link>
