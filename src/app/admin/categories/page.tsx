@@ -337,12 +337,12 @@ export default function AdminCategoriesPage() {
             </div>
 
             {(imagePreviewUrl || imageUrl) && (
-              <div className="relative h-40 w-40 overflow-hidden rounded-xl border bg-slate-100">
+              <div className="relative aspect-square w-40 overflow-hidden rounded-xl border bg-slate-100">
                 {imagePreviewUrl ? (
                   <img
                     src={imagePreviewUrl}
                     alt="معاينة صورة التصنيف"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 ) : (
                   <Image
@@ -350,7 +350,7 @@ export default function AdminCategoriesPage() {
                     alt="معاينة صورة التصنيف"
                     fill
                     sizes="160px"
-                    className="object-cover"
+                    className="object-contain"
                   />
                 )}
               </div>

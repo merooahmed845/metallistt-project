@@ -564,14 +564,14 @@ export default function AdminProductsPage() {
                     key={product.id}
                     className="flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm"
                   >
-                    <div className="relative h-48 bg-slate-100">
+                    <div className="relative aspect-[4/3] bg-slate-100">
                       {product.images?.[0]?.startsWith("http") ? (
                         <Image
                           src={product.images[0]}
                           alt={product.title}
                           fill
                           sizes="(max-width: 768px) 100vw, 33vw"
-                          className="object-cover"
+                          className="object-contain"
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
