@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import AdminAuthCheck from "@/components/AdminAuthCheck";
 import { supabase } from "@/utils/supabase/client";
 
@@ -19,6 +20,9 @@ export default function AdminCategoriesPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const imagePreviewUrlRef = useRef<string | null>(null);
   const [editing, setEditing] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -100,6 +104,7 @@ export default function AdminCategoriesPage() {
     setName("");
     setSlug("");
     setImageUrl("");
+    selectImageFile(null);
   };
 
   const startEdit = (category: Category) => {
@@ -107,6 +112,58 @@ export default function AdminCategoriesPage() {
     setName(category.name);
     setSlug(category.slug);
     setImageUrl(category.image_url ?? "");
+    selectImageFile(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrlRef.current) {
+        URL.revokeObjectURL(imagePreviewUrlRef.current);
+      }
+    };
+  }, []);
+
+  const selectImageFile = (file: File | null) => {
+    if (imagePreviewUrlRef.current) {
+      URL.revokeObjectURL(imagePreviewUrlRef.current);
+    }
+
+    const nextPreviewUrl = file ? URL.createObjectURL(file) : null;
+    imagePreviewUrlRef.current = nextPreviewUrl;
+    setImageFile(file);
+    setImagePreviewUrl(nextPreviewUrl);
+  };
+
+  const uploadImage = async () => {
+    if (!imageFile) {
+      return null;
+    }
+
+    if (!imageFile.type.startsWith("image/")) {
+      throw new Error("يرجى اختيار ملف صورة صالح.");
+    }
+
+    if (imageFile.size > 5 * 1024 * 1024) {
+      throw new Error("حجم الصورة يجب ألا يتجاوز 5 ميجابايت.");
+    }
+
+    const ext = imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
+    // Filename generation runs only during the submit event, never during render.
+    // eslint-disable-next-line react-hooks/purity
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(fileName, imageFile);
+
+    if (error) {
+      throw error;
+    }
+
+    return supabase.storage.from("product-images").getPublicUrl(fileName).data
+      .publicUrl;
   };
 
   const submit = async (event: React.FormEvent) => {
@@ -128,12 +185,6 @@ export default function AdminCategoriesPage() {
     setSaving(true);
 
     try {
-      const values = {
-        name: cleanName,
-        slug: cleanSlug,
-        image_url: imageUrl.trim() || null,
-      };
-
       const { data: duplicateCategory, error: duplicateError } = await supabase
         .from("categories")
         .select("id")
@@ -149,6 +200,13 @@ export default function AdminCategoriesPage() {
         alert("هذا الـSlug مستخدم بالفعل، اختر Slug آخر.");
         return;
       }
+
+      const uploadedImageUrl = await uploadImage();
+      const values = {
+        name: cleanName,
+        slug: cleanSlug,
+        image_url: uploadedImageUrl || imageUrl.trim() || null,
+      };
 
       const result = editing
         ? await supabase.from("categories").update(values).eq("id", editing.id)
@@ -261,7 +319,42 @@ export default function AdminCategoriesPage() {
                   className="mt-1 w-full rounded-xl border px-4 py-2.5 font-normal"
                 />
               </label>
+
+              <label className="text-sm font-bold">
+                رفع صورة من الجهاز
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) =>
+                    selectImageFile(event.target.files?.[0] ?? null)
+                  }
+                  className="mt-1 w-full rounded-xl border bg-slate-50 px-4 py-2.5 font-normal"
+                />
+                <span className="mt-1 block text-xs font-normal text-slate-500">
+                  الصور فقط، بحد أقصى 5 ميجابايت. الصورة المرفوعة تستبدل رابط الصورة عند الحفظ.
+                </span>
+              </label>
             </div>
+
+            {(imagePreviewUrl || imageUrl) && (
+              <div className="relative h-40 w-40 overflow-hidden rounded-xl border bg-slate-100">
+                {imagePreviewUrl ? (
+                  <img
+                    src={imagePreviewUrl}
+                    alt="معاينة صورة التصنيف"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={imageUrl}
+                    alt="معاينة صورة التصنيف"
+                    fill
+                    sizes="160px"
+                    className="object-cover"
+                  />
+                )}
+              </div>
+            )}
 
             <div className="flex gap-2">
               <button
