@@ -33,6 +33,7 @@ export default function MyOrdersPage() {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
+  const [reviewError, setReviewError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -70,6 +71,7 @@ export default function MyOrdersPage() {
     if (!user) return
     setSubmitting(true)
     setSuccessMsg('')
+    setReviewError('')
 
     const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'مشتري مؤكد'
 
@@ -84,9 +86,14 @@ export default function MyOrdersPage() {
     ])
 
     if (error) {
-      alert(`حدث خطأ أثناء إضافة التقييم: ${error.message}`)
+      if (error.code === '23503') {
+        setReviewError('عذرًا، لا يمكن إضافة التقييم لأن هذا المنتج لم يعد متاحًا حاليًا.')
+      } else {
+        setReviewError('حدث خطأ أثناء إضافة التقييم. حاول مرة أخرى.')
+      }
     } else {
       setSuccessMsg('تمت إضافة تقييمك بنجاح!')
+      setReviewError('')
       setActiveReviewProduct(null)
       setComment('')
       setRating(5)
@@ -195,7 +202,10 @@ export default function MyOrdersPage() {
 
                                       <div className="flex gap-2 justify-end">
                                         <button 
-                                          onClick={() => setActiveReviewProduct(null)}
+                                          onClick={() => {
+                                            setActiveReviewProduct(null)
+                                            setReviewError('')
+                                          }}
                                           className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-gray-100 rounded-lg"
                                         >
                                           إلغاء
@@ -208,10 +218,22 @@ export default function MyOrdersPage() {
                                           {submitting ? 'جاري الإرسال...' : 'إرسال التقييم'}
                                         </button>
                                       </div>
+
+                                      {reviewError && (
+                                        <div
+                                          role="alert"
+                                          className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-medium"
+                                        >
+                                          {reviewError}
+                                        </div>
+                                      )}
                                     </div>
                                   ) : (
                                     <button 
-                                      onClick={() => setActiveReviewProduct(targetProductId)}
+                                      onClick={() => {
+                                        setActiveReviewProduct(targetProductId)
+                                        setReviewError('')
+                                      }}
                                       className="text-xs font-bold text-amber-600 hover:underline flex items-center gap-1 mt-1 cursor-pointer"
                                     >
                                       <span>★</span>
