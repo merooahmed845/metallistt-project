@@ -7,6 +7,7 @@ interface CartItem {
   title: string
   price: number
   image?: string
+  stock_quantity?: number
   quantity: number
 }
 
@@ -37,7 +38,10 @@ function isValidCartItem(value: unknown): value is CartItem {
     typeof item.quantity === 'number' &&
     Number.isInteger(item.quantity) &&
     item.quantity > 0 &&
-    (item.image === undefined || typeof item.image === 'string')
+    (item.image === undefined || typeof item.image === 'string') &&
+    (item.stock_quantity === undefined ||
+      (typeof item.stock_quantity === 'number' &&
+        Number.isFinite(item.stock_quantity)))
   )
 }
 
@@ -97,14 +101,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
     setCart((prevCart) => {
+      const hasStockLimit =
+        typeof product.stock_quantity === 'number' &&
+        Number.isFinite(product.stock_quantity)
+      const maxQuantity = hasStockLimit
+        ? Math.min(MAX_CART_QUANTITY, Math.max(0, Math.floor(product.stock_quantity!)))
+        : MAX_CART_QUANTITY
+      if (maxQuantity <= 0) return prevCart
+
       const existingIndex = prevCart.findIndex((item) => item.id === product.id)
       if (existingIndex > -1) {
-        if (prevCart[existingIndex].quantity >= MAX_CART_QUANTITY) return prevCart
+        if (prevCart[existingIndex].quantity >= maxQuantity) return prevCart
 
         const newCart = [...prevCart]
         newCart[existingIndex] = {
           ...newCart[existingIndex],
-          quantity: Math.min(MAX_CART_QUANTITY, newCart[existingIndex].quantity + 1),
+          stock_quantity: product.stock_quantity ?? newCart[existingIndex].stock_quantity,
+          quantity: Math.min(maxQuantity, newCart[existingIndex].quantity + 1),
         }
         return newCart
       } else {

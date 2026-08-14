@@ -78,9 +78,10 @@ export default function CartPage() {
                         title: item.title,
                         price: item.price,
                         image: item.image,
+                        stock_quantity: item.stock_quantity,
                       })
                     }
-                    disabled={item.quantity >= MAX_CART_QUANTITY}
+                    disabled={item.quantity >= MAX_CART_QUANTITY || (item.stock_quantity !== undefined && item.quantity >= item.stock_quantity)}
                     className="flex h-7 w-7 items-center justify-center rounded-lg bg-white font-bold text-slate-900 shadow-sm transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
                     title="Increase quantity"
                   >
