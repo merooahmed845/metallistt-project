@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/utils/supabase/client";
 import AdminAuthCheck from "@/components/AdminAuthCheck";
 
@@ -33,6 +33,59 @@ type FormData = {
   stock_quantity: string;
   category_id: string;
 };
+
+type ImageItem = {
+  id: string;
+  type: "existing" | "new";
+  url?: string;
+  file?: File;
+  previewUrl?: string;
+};
+
+const MAX_PRODUCT_IMAGES = 8;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+function createImageId(type: ImageItem["type"]) {
+  return `${type}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function revokePreviewUrls(items: ImageItem[]) {
+  items.forEach((item) => {
+    if (item.previewUrl) {
+      URL.revokeObjectURL(item.previewUrl);
+    }
+  });
+}
+
+function validateImageFile(file: File) {
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    return "نوع الصورة غير مدعوم. المسموح: JPG وPNG وWebP.";
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    return "حجم الصورة يجب ألا يتجاوز 5 ميجابايت.";
+  }
+
+  return null;
+}
+
+function validateImageItems(items: ImageItem[]) {
+  if (items.length > MAX_PRODUCT_IMAGES) {
+    return "يمكن إضافة 8 صور كحد أقصى للمنتج.";
+  }
+
+  for (const item of items) {
+    if (item.type === "new" && item.file) {
+      const message = validateImageFile(item.file);
+      if (message) {
+        return message;
+      }
+    }
+  }
+
+  return null;
+}
 
 const emptyForm: FormData = {
   title: "",
@@ -92,7 +145,19 @@ export default function AdminProductsPage() {
 
   const [formData, setFormData] = useState<FormData>(emptyForm);
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageItems, setImageItems] = useState<ImageItem[]>([]);
+  const [imageError, setImageError] = useState("");
+  const imageItemsRef = useRef<ImageItem[]>([]);
+
+  useEffect(() => {
+    imageItemsRef.current = imageItems;
+  }, [imageItems]);
+
+  useEffect(() => {
+    return () => {
+      revokePreviewUrls(imageItemsRef.current);
+    };
+  }, []);
 
   const [editing, setEditing] = useState<Product | null>(null);
 
@@ -101,7 +166,6 @@ export default function AdminProductsPage() {
   /*
    * Pure data loader:
    * لا يقوم بتعديل React state.
-   * هذا مهم حتى لا يظهر react-hooks/set-state-in-effect.
    */
   const loadProducts = async () => {
     const [
@@ -127,12 +191,6 @@ export default function AdminProductsPage() {
     };
   };
 
-  /*
-   * Used for manual refresh after:
-   * - add
-   * - edit
-   * - refresh button
-   */
   const fetchData = async () => {
     setLoading(true);
 
@@ -153,12 +211,6 @@ export default function AdminProductsPage() {
     }
   };
 
-  /*
-   * Initial page load.
-   *
-   * The async initialization is nested inside the effect,
-   * which avoids the react-hooks/set-state-in-effect warning.
-   */
   useEffect(() => {
     let cancelled = false;
 
@@ -206,6 +258,7 @@ export default function AdminProductsPage() {
   };
 
   const startEdit = (product: Product) => {
+    revokePreviewUrls(imageItems);
     setEditing(product);
 
     setFormData({
@@ -217,7 +270,19 @@ export default function AdminProductsPage() {
       category_id: product.category_id ?? "",
     });
 
-    setImageFile(null);
+    setImageItems(
+      (product.images ?? [])
+        .filter(
+          (image): image is string =>
+            typeof image === "string" && image.trim().length > 0,
+        )
+        .map((url, index) => ({
+          id: `existing-${product.id}-${index}`,
+          type: "existing" as const,
+          url,
+        })),
+    );
+    setImageError("");
 
     window.scrollTo({
       top: 0,
@@ -226,43 +291,170 @@ export default function AdminProductsPage() {
   };
 
   const resetForm = () => {
+    revokePreviewUrls(imageItems);
     setEditing(null);
     setFormData(emptyForm);
-    setImageFile(null);
+    setImageItems([]);
+    setImageError("");
   };
 
-  const uploadImage = async () => {
-    if (!imageFile) {
-      return null;
+  const handleImageSelection = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    event.target.value = "";
+
+    if (selectedFiles.length === 0) {
+      return;
     }
 
-    const ext = imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
+    const availableSlots = MAX_PRODUCT_IMAGES - imageItems.length;
+    const acceptedFiles: File[] = [];
+    const messages: string[] = [];
 
+    for (const file of selectedFiles) {
+      const validationMessage = validateImageFile(file);
+      if (validationMessage) {
+        messages.push(validationMessage);
+        continue;
+      }
+
+      if (acceptedFiles.length >= availableSlots) {
+        messages.push("يمكن إضافة 8 صور كحد أقصى للمنتج.");
+        continue;
+      }
+
+      acceptedFiles.push(file);
+    }
+
+    if (acceptedFiles.length > 0) {
+      setImageItems((previous) => [
+        ...previous,
+        ...acceptedFiles.map((file) => ({
+          id: createImageId("new"),
+          type: "new" as const,
+          file,
+          previewUrl: URL.createObjectURL(file),
+        })),
+      ]);
+    }
+
+    setImageError([...new Set(messages)].join(" "));
+  };
+
+  const removeImage = (id: string) => {
+    const item = imageItems.find((image) => image.id === id);
+    if (item?.previewUrl) {
+      URL.revokeObjectURL(item.previewUrl);
+    }
+    setImageItems((previous) => previous.filter((image) => image.id !== id));
+  };
+
+  const moveImage = (id: string, direction: -1 | 1) => {
+    setImageItems((previous) => {
+      const currentIndex = previous.findIndex((image) => image.id === id);
+      const nextIndex = currentIndex + direction;
+
+      if (
+        currentIndex < 0 ||
+        nextIndex < 0 ||
+        nextIndex >= previous.length
+      ) {
+        return previous;
+      }
+
+      const next = [...previous];
+      const [moved] = next.splice(currentIndex, 1);
+      next.splice(nextIndex, 0, moved);
+      return next;
+    });
+  };
+
+  const setMainImage = (id: string) => {
+    setImageItems((previous) => {
+      const currentIndex = previous.findIndex((image) => image.id === id);
+      if (currentIndex <= 0) {
+        return previous;
+      }
+
+      const next = [...previous];
+      const [mainImage] = next.splice(currentIndex, 1);
+      next.unshift(mainImage);
+      return next;
+    });
+  };
+
+  const uploadImage = async (file: File) => {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const fileName = `${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}.${ext}`;
 
     const { error } = await supabase.storage
       .from("product-images")
-      .upload(fileName, imageFile);
+      .upload(fileName, file);
 
     if (error) {
       throw error;
     }
 
-    return supabase.storage.from("product-images").getPublicUrl(fileName).data
-      .publicUrl;
+    return {
+      path: fileName,
+      publicUrl: supabase.storage.from("product-images").getPublicUrl(fileName)
+        .data.publicUrl,
+    };
+  };
+
+  const cleanupUploadedFiles = async (paths: string[]) => {
+    if (paths.length === 0) {
+      return;
+    }
+
+    const { error } = await supabase.storage.from("product-images").remove(paths);
+    if (error) {
+      console.error("Unable to clean up newly uploaded product images:", error);
+    }
   };
 
   const submitProduct = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    const imageValidationMessage = validateImageItems(imageItems);
+    if (imageValidationMessage) {
+      setImageError(imageValidationMessage);
+      return;
+    }
+
+    let validatedForm: ReturnType<typeof validateForm>;
+    try {
+      validatedForm = validateForm(formData);
+    } catch (error: unknown) {
+      alert(
+        error instanceof Error ? error.message : "بيانات المنتج غير صالحة.",
+      );
+      return;
+    }
+
+    setImageError("");
     setIsSubmitting(true);
+    const uploadedPaths: string[] = [];
 
     try {
-      const { price, salePrice, stock } = validateForm(formData);
+      const { price, salePrice, stock } = validatedForm;
+      const finalImages: string[] = [];
 
-      const uploaded = await uploadImage();
+      for (const item of imageItems) {
+        if (item.type === "existing" && item.url) {
+          finalImages.push(item.url);
+          continue;
+        }
+
+        if (item.type === "new" && item.file) {
+          const uploaded = await uploadImage(item.file);
+          uploadedPaths.push(uploaded.path);
+          finalImages.push(uploaded.publicUrl);
+        }
+      }
 
       const values = {
         title: formData.title.trim(),
@@ -271,7 +463,7 @@ export default function AdminProductsPage() {
         description: formData.description.trim() || null,
         stock_quantity: stock,
         category_id: formData.category_id || null,
-        ...(uploaded ? { images: [uploaded] } : {}),
+        images: finalImages,
       };
 
       const result = editing
@@ -282,7 +474,6 @@ export default function AdminProductsPage() {
               slug: `${slugify(formData.title)}-${Date.now()
                 .toString()
                 .slice(-5)}`,
-              images: uploaded ? [uploaded] : [],
             },
           ]);
 
@@ -296,16 +487,16 @@ export default function AdminProductsPage() {
 
       await fetchData();
     } catch (error: unknown) {
-      alert(
-        `خطأ: ${error instanceof Error ? error.message : "حدث خطأ غير معروف."}`,
-      );
+      await cleanupUploadedFiles(uploadedPaths);
+      console.error("Product save failed:", error);
+      alert("تعذر رفع الصور أو حفظ المنتج. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const deleteProduct = async (id: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+    if (!confirm("هل أنت تأكد من حذف هذا المنتج؟")) {
       return;
     }
 
@@ -473,22 +664,106 @@ export default function AdminProductsPage() {
               </label>
             </div>
 
-            <label className="block text-sm font-bold">
-              الصورة
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(event) =>
-                  setImageFile(event.target.files?.[0] ?? null)
-                }
-                className="mt-1 w-full rounded-xl border bg-slate-50 px-4 py-2.5 font-normal"
-              />
-              {editing && !imageFile && (
-                <span className="mt-2 block text-xs font-normal text-slate-500">
-                  ستبقى الصورة الحالية إذا لم تختر صورة جديدة.
-                </span>
+            <div className="space-y-3">
+              <label className="block text-sm font-bold">
+                الصور
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageSelection}
+                  disabled={isSubmitting}
+                  className="mt-1 w-full rounded-xl border bg-slate-50 px-4 py-2.5 font-normal"
+                />
+              </label>
+              <p className="text-xs font-normal text-slate-500">
+                يمكنك إضافة حتى 8 صور بصيغ JPG وPNG وWebP، بحد أقصى 5 ميجابايت للصورة.
+              </p>
+              {imageError && (
+                <p role="alert" className="text-sm font-bold text-red-600">
+                  {imageError}
+                </p>
               )}
-            </label>
+              {imageItems.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {imageItems.map((item, index) => {
+                    const imageSource =
+                      item.type === "new" ? item.previewUrl : item.url;
+                    const canRenderImage =
+                      item.type === "new" || imageSource?.startsWith("http");
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-2"
+                      >
+                        <div className="relative aspect-square overflow-hidden rounded-lg bg-white">
+                          {canRenderImage && imageSource ? (
+                            <Image
+                              src={imageSource}
+                              alt={`${formData.title || "المنتج"} - صورة ${index + 1}`}
+                              fill
+                              unoptimized={item.type === "new"}
+                              sizes="(max-width: 640px) 50vw, 25vw"
+                              className="object-contain"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-center text-xs text-slate-400">
+                              صورة غير متاحة للمعاينه
+                            </div>
+                          )}
+                          {index === 0 && (
+                            <span className="absolute right-1 top-1 rounded-full bg-slate-900 px-2 py-1 text-[10px] font-bold text-white">
+                              الرئيسية
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveImage(item.id, -1)}
+                            disabled={index === 0 || isSubmitting}
+                            className="rounded-lg border bg-white px-2 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            تحريك قبل
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveImage(item.id, 1)}
+                            disabled={index === imageItems.length - 1 || isSubmitting}
+                            className="rounded-lg border bg-white px-2 py-1.5 text-[11px] font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            تحريك بعد
+                          </button>
+                        </div>
+                        {index !== 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setMainImage(item.id)}
+                            disabled={isSubmitting}
+                            className="w-full rounded-lg bg-amber-50 px-2 py-1.5 text-[11px] font-bold text-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            تعيين كصورة رئيسية
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(item.id)}
+                          disabled={isSubmitting}
+                          className="w-full rounded-lg bg-red-50 px-2 py-1.5 text-[11px] font-bold text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          حذف الصورة
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="rounded-xl border border-dashed border-slate-300 px-4 py-5 text-center text-sm font-normal text-slate-500">
+                  لم تتم إضافة صور للمنتج بعد.
+                </p>
+              )}
+            </div>
 
             <label className="block text-sm font-bold">
               وصف المنتج
