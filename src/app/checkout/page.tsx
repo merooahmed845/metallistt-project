@@ -188,6 +188,26 @@ return (
         </p>
       </div>
 
+            <a
+        href={`https://wa.me/201153079807?text=${encodeURIComponent(`طلب تحويل — Metallia
+رقم الطلب: ${orderResult.orderId}
+الاسم: ${formData.fullName}
+الهاتف: ${formData.phone}
+المحافظة: ${formData.governorate}
+العنوان: ${formData.address}
+رسوم الشحن: ${orderResult.shippingFee} ج.م
+الإجمالي الكلي: ${orderResult.total} ج.م
+
+سأرسل إسكرين التحويل في هذه المحادثة.`)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mb-3 block w-full rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700"
+      >
+        إرسال إسكرين التحويل عبر الواتساب
+      </a>
+      <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center font-bold text-amber-900">
+        الشحن خلال 5 أيام
+      </p>
       <button
         onClick={() => {
           router.push('/my-orders')
@@ -318,7 +338,7 @@ return (
           </p>
 
           <div className="bg-white px-3 py-2 rounded-lg font-mono font-bold text-center text-slate-900 border border-amber-300 text-lg mb-2">
-            01118111648
+            <span className="font-bold">InstaPay / حساب بنكي:</span> <span className="font-mono font-bold">01118111648</span><br /><span className="font-bold">Vodafone Cash:</span> <span className="font-mono font-bold">01038993379</span>
           </div>
 
           <p className="text-xs text-amber-700">
