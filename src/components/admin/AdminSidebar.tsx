@@ -1,5 +1,53 @@
 'use client'
+
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-const items = [{ label: 'لوحة التحكم', href: '/admin', icon: '▦' }, { label: 'المنتجات', href: '/admin/products', icon: '□' }, { label: 'التصنيفات', href: '/admin/categories', icon: '◇' }, { label: 'الطلبات', href: '/admin/orders', icon: '¤' }]
-export default function AdminSidebar() { const pathname = usePathname(); return <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-l lg:border-slate-200 lg:bg-white"><div className="flex h-full flex-col"><div className="border-b px-6 py-6"><Link href="/admin" className="block"><p className="text-lg font-extrabold">Metallia - ميتاليا</p><p className="mt-1 text-xs font-medium text-amber-600">لوحة الإدارة</p></Link></div><nav aria-label="التنقل في لوحة الإدارة" className="flex-1 space-y-1 px-3 py-5">{items.map((item) => { const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href); return <Link key={item.href} href={item.href} className={`flex min-h-11 items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 ${active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}><span aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link> })}</nav><div className="border-t p-4"><Link href="/" className="block min-h-11 rounded-xl border px-4 py-3 text-center text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">العودة إلى المتجر</Link></div></div></aside> }
+
+const items = [
+  { label: 'لوحة التحكم', href: '/admin', icon: '▧' },
+  { label: 'المنتجات', href: '/admin/products', icon: '□' },
+  { label: 'البانرات', href: '/admin/banners', icon: '▤' },
+  { label: 'التصنيفات', href: '/admin/categories', icon: '◇' },
+  { label: 'الطلبات', href: '/admin/orders', icon: '¤' },
+]
+
+export default function AdminSidebar() {
+  const pathname = usePathname()
+  return (
+    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-l lg:border-slate-200 lg:bg-white">
+      <div className="flex h-full flex-col">
+        <div className="border-b px-6 py-6">
+          <Link href="/admin" className="block">
+            <p className="text-lg font-extrabold">Metallia - ميتاليا</p>
+            <p className="mt-1 text-xs font-medium text-amber-600">لوحة الإدارة</p>
+          </Link>
+        </div>
+        <nav aria-label="التنقل في لوحة الإدارة" className="flex-1 space-y-1 px-3 py-5">
+          {items.map((item) => {
+            const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex min-h-11 items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                  active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <span aria-hidden="true">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            )
+          })}
+        </nav>
+        <div className="border-t p-4">
+          <Link
+            href="/"
+            className="block min-h-11 rounded-xl border px-4 py-3 text-center text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+          >
+            العودة إلى المتجر
+          </Link>
+        </div>
+      </div>
+    </aside>
+  )
+}

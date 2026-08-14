@@ -1,4 +1,29 @@
 'use client'
+
 import Link from 'next/link'
-import { useState } from 'react'
-export default function AdminHeader() { const [menuOpen, setMenuOpen] = useState(false); return <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur"><div className="flex h-16 items-center justify-between px-4 sm:px-6"><div><p className="text-sm font-bold text-slate-900">لوحة التحكم</p><p className="hidden text-xs text-slate-500 sm:block">إدارة متجر Metallia - ميتاليا</p></div><div className="relative"><button type="button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-haspopup="menu" className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-500"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">A</span><span className="hidden sm:block">Admin</span><span aria-hidden="true" className={`text-xs transition-transform ${menuOpen ? 'rotate-180' : ''}`}>▼</span></button>{menuOpen && <div role="menu" className="absolute left-0 mt-2 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"><Link href="/" role="menuitem" onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">العودة إلى المتجر</Link></div>}</div></div></header> }
+
+export default function AdminHeader() {
+  return (
+    <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
+            لوحة التحكم
+          </h1>
+          <p className="text-xs text-slate-500 sm:text-sm">
+            إدارة متجر Metallia - ميتاليا
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="hidden rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 lg:inline-flex"
+          >
+            العودة إلى المتجر
+          </Link>
+        </div>
+      </div>
+    </header>
+  )
+}

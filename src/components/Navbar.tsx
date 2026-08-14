@@ -39,26 +39,50 @@ export default function Navbar() {
   return <>
     <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-3 shadow-xs" dir="rtl">
       <div className="flex items-center gap-3 sm:gap-6 min-w-0">
-        <Link href="/" className="flex shrink-0 items-center gap-2 font-black text-xl text-slate-900"><Image src="/logo.png" alt="Metallia" width={36} height={36} className="h-9 w-auto" />Metallia - ميتاليا</Link>
-        {isAdmin && <div className="hidden lg:flex items-center gap-4 bg-amber-50 px-3.5 py-1.5 rounded-xl border border-amber-200 shadow-2xs">
-          <span className="text-xs font-bold text-amber-800">لوحة التحكم:</span>
-          <Link href="/admin/products" className="text-sm font-bold text-slate-800 hover:text-amber-600 transition-colors">إدارة المنتجات</Link>
-          <Link href="/admin/orders" className="text-sm font-bold text-slate-800 hover:text-amber-600 transition-colors">إدارة الطلبات</Link>
-        </div>}
+        <Link href="/" className="flex shrink-0 items-center gap-2 font-black text-xl text-slate-900">
+          <Image src="/logo.png" alt="Metallia" width={36} height={36} className="h-9 w-auto" />
+          Metallia - ميتاليا
+        </Link>
+
+        {/* التعديل هنا: رابط واحد للوحة التحكم يوجه لـ /admin */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="hidden lg:flex items-center gap-2 bg-amber-50 px-3.5 py-1.5 rounded-xl border border-amber-200 shadow-2xs text-sm font-bold text-amber-800 hover:bg-amber-100 hover:text-amber-900 transition-colors"
+          >
+            <span aria-hidden="true">⚙️</span>
+            <span>إدارة الموقع</span>
+          </Link>
+        )}
       </div>
+
       <div className="flex items-center gap-2 sm:gap-4">
         <Link href="/cart" aria-label={`السلة، ${totalItems} منتجات`} className="flex items-center gap-2 rounded-xl px-3 sm:px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-gray-100">
-          <span aria-hidden="true">🛒</span><span className="hidden sm:inline">السلة</span><span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">{totalItems}</span>
+          <span aria-hidden="true">🛒</span>
+          <span className="hidden sm:inline">السلة</span>
+          <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">{totalItems}</span>
         </Link>
-        {user ? <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-slate-800 hidden sm:inline">{displayName}</span>
-          <button onClick={() => setIsDrawerOpen(true)} aria-expanded={isDrawerOpen} aria-controls="profile-drawer" aria-label="فتح قائمة الحساب" className="bg-slate-900 text-white px-3 sm:px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs flex items-center gap-2">
-            <span>حسابي</span><span className="text-xs" aria-hidden="true">☰</span>
-          </button>
-        </div> : <div className="flex items-center gap-1 sm:gap-2">
-          <Link href="/login" className="text-sm font-bold text-slate-700 px-3 sm:px-4 py-2 hover:bg-gray-100 rounded-xl transition-colors">دخول</Link>
-          <Link href="/register" className="text-sm font-bold bg-slate-900 text-white px-3 sm:px-4 py-2 rounded-xl hover:bg-slate-800 transition-colors shadow-2xs">حساب جديد</Link>
-        </div>}
+
+        {user ? (
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-slate-800 hidden sm:inline">{displayName}</span>
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              aria-expanded={isDrawerOpen}
+              aria-controls="profile-drawer"
+              aria-label="فتح قائمة الحساب"
+              className="bg-slate-900 text-white px-3 sm:px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs flex items-center gap-2"
+            >
+              <span>حسابي</span>
+              <span className="text-xs" aria-hidden="true">☰</span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Link href="/login" className="text-sm font-bold text-slate-700 px-3 sm:px-4 py-2 hover:bg-gray-100 rounded-xl transition-colors">دخول</Link>
+            <Link href="/register" className="text-sm font-bold bg-slate-900 text-white px-3 sm:px-4 py-2 rounded-xl hover:bg-slate-800 transition-colors shadow-2xs">حساب جديد</Link>
+          </div>
+        )}
       </div>
     </nav>
     <ProfileDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} user={user} isAdmin={isAdmin} />

@@ -1,4 +1,6 @@
 import { getCategories, getProducts } from '@/services/productService'
+import { getActiveBanners } from '@/services/bannerService'
+import HomepageBanner from '@/components/homepage/HomepageBanner'
 import Link from 'next/link'
 import Image from 'next/image'
 import AddToCartButton from './product/[id]/AddToCartButton'
@@ -10,9 +12,125 @@ interface Product { id: string; title: string; description: string | null; price
 export default async function Home() {
   const categories: Category[] = await getCategories()
   const products: Product[] = await getProducts()
-  return <div className="min-h-screen bg-gray-50 text-gray-900">
-    <section className="bg-slate-900 px-4 py-20 text-center text-white"><div className="mx-auto max-w-4xl"><h1 className="mb-6 text-4xl font-extrabold md:text-6xl">أهلاً بك في متجر <span className="text-amber-500">Metallia - ميتاليا</span></h1><p className="mb-8 text-lg text-gray-300 md:text-xl">وجهتك الأولى لأفضل المنتجات والإكسسوارات العصرية بأعلى جودة وأفضل الأسعار.</p><Link href="#products" className="inline-flex rounded-full bg-amber-500 px-8 py-3 text-lg font-bold text-slate-950 hover:bg-amber-600">تصفح المنتجات الآن</Link></div></section>
-    <section className="mx-auto max-w-7xl px-4 py-12"><h2 className="mb-6 text-2xl font-bold md:text-3xl">التصنيفات الرئيسية</h2><div className="grid grid-cols-2 gap-4 md:grid-cols-4">{categories.length ? categories.map((category) => <Link href={`/category/${category.slug}`} key={category.id} className="group overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">{category.image_url ? <div className="relative h-32"><Image src={category.image_url} alt={category.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition group-hover:scale-105" /></div> : <div className="flex h-32 items-center justify-center bg-amber-50 text-3xl" aria-hidden="true">✦</div>}<h3 className="p-4 text-center text-lg font-semibold">{category.name}</h3></Link>) : <p className="col-span-full text-center text-gray-500">لا توجد تصنيفات مضافة حالياً.</p>}</div></section>
-    <section id="products" className="mx-auto max-w-7xl px-4 py-12"><h2 className="mb-6 text-2xl font-bold md:text-3xl">أحدث المنتجات</h2><div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">{products.length ? products.map((product, index) => { const image = product.images?.[0]; const sale = product.sale_price !== null && product.sale_price !== undefined; return <article key={product.id} className="flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"><Link href={`/product/${product.id}`} className="relative flex aspect-[4/3] items-center justify-center bg-gray-200 text-gray-400">{image?.startsWith('http') ? <Image src={image} alt={product.title} fill priority={index === 0} sizes="(max-width: 768px) 100vw, 33vw" className="object-contain" /> : <span>صورة المنتج</span>}</Link><div className="flex flex-1 flex-col p-4"><div className="mb-2 flex items-start justify-between gap-2"><Link href={`/product/${product.id}`}><h3 className="text-lg font-bold hover:text-amber-600">{product.title}</h3></Link><WishlistButton product={{ ...product, sale_price: product.sale_price }} /></div><p className="mb-4 line-clamp-2 text-sm text-gray-600">{product.description || 'لا يوجد وصف متاح.'}</p><div className="mt-auto flex items-center justify-between gap-2"><div><span className="font-bold text-amber-600">{sale ? product.sale_price : product.price} ج.م</span>{sale && <span className="mr-2 text-sm text-gray-400 line-through">{product.price} ج.م</span>}</div><AddToCartButton product={product} /></div></div></article> }) : <p className="col-span-full text-center text-gray-500">لا توجد منتجات مضافة حالياً.</p>}</div></section>
-  </div>
+  let banners: Awaited<ReturnType<typeof getActiveBanners>> = []
+
+  try {
+    banners = await getActiveBanners()
+  } catch (error) {
+    console.error('Homepage banners unavailable; using the existing hero fallback.', error)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {banners.length > 0 ? (
+        <HomepageBanner banner={banners[0]} />
+      ) : (
+        <section className="bg-slate-900 px-4 py-20 text-center text-white">
+          <div className="mx-auto max-w-4xl">
+            <h1 className="mb-6 text-4xl font-extrabold md:text-6xl">
+              أهلاً بك في متجر <span className="text-amber-500">Metallia - ميتاليا</span>
+            </h1>
+            <p className="mb-8 text-lg text-gray-300 md:text-xl">
+              وجهتك الأولى لأفضل المنتجات والإكسسوارات العصرية بأعلى جودة وأفضل الأسعار.
+            </p>
+            <Link
+              href="#products"
+              className="inline-flex rounded-full bg-amber-500 px-8 py-3 text-lg font-bold text-slate-950 hover:bg-amber-600"
+            >
+              تصفح المنتجات الآن
+            </Link>
+          </div>
+        </section>
+      )}
+
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <h2 className="mb-6 text-2xl font-bold md:text-3xl">التصنيفات الرئيسية</h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {categories.length ? (
+            categories.map((category) => (
+              <Link
+                href={`/category/${category.slug}`}
+                key={category.id}
+                className="group overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                {category.image_url ? (
+                  <div className="relative h-32">
+                    <Image
+                      src={category.image_url}
+                      alt={category.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover transition group-hover:scale-105"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-32 items-center justify-center bg-amber-50 text-3xl" aria-hidden="true">
+                    ✦
+                  </div>
+                )}
+                <h3 className="p-4 text-center text-lg font-semibold">{category.name}</h3>
+              </Link>
+            ))
+          ) : (
+            <p className="col-span-full text-center text-gray-500">لا توجد تصنيفات مضافة حالياً.</p>
+          )}
+        </div>
+      </section>
+
+      <section id="products" className="mx-auto max-w-7xl px-4 py-12">
+        <h2 className="mb-6 text-2xl font-bold md:text-3xl">أحدث المنتجات</h2>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {products.length ? (
+            products.map((product, index) => {
+              const image = product.images?.[0]
+              const sale = product.sale_price !== null && product.sale_price !== undefined
+              return (
+                <article key={product.id} className="flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                  <Link
+                    href={`/product/${product.id}`}
+                    className="relative flex aspect-[4/3] items-center justify-center bg-gray-200 text-gray-400"
+                  >
+                    {image?.startsWith('http') ? (
+                      <Image
+                        src={image}
+                        alt={product.title}
+                        fill
+                        priority={index === 0}
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-contain"
+                      />
+                    ) : (
+                      <span>صورة المنتج</span>
+                    )}
+                  </Link>
+                  <div className="flex flex-1 flex-col p-4">
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <Link href={`/product/${product.id}`}>
+                        <h3 className="text-lg font-bold hover:text-amber-600">{product.title}</h3>
+                      </Link>
+                      <WishlistButton product={{ ...product, sale_price: product.sale_price }} />
+                    </div>
+                    <p className="mb-4 line-clamp-2 text-sm text-gray-600">
+                      {product.description || 'لا يوجد وصف متاح.'}
+                    </p>
+                    <div className="mt-auto flex items-center justify-between gap-2">
+                      <div>
+                        <span className="font-bold text-amber-600">{sale ? product.sale_price : product.price} ج.م</span>
+                        {sale && (
+                          <span className="mr-2 text-sm text-gray-400 line-through">{product.price} ج.م</span>
+                        )}
+                      </div>
+                      <AddToCartButton product={product} />
+                    </div>
+                  </div>
+                </article>
+              )
+            })
+          ) : (
+            <p className="col-span-full text-center text-gray-500">لا توجد منتجات مضافة حالياً.</p>
+          )}
+        </div>
+      </section>
+    </div>
+  )
 }
