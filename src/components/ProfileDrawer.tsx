@@ -5,13 +5,11 @@ import { supabase } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { useCart } from '@/context/CartContext'
-
 interface ProfileDrawerProps { isOpen: boolean; onClose: () => void; user: User | null; isAdmin: boolean }
 
-export default function ProfileDrawer({ isOpen, onClose, user, isAdmin }: ProfileDrawerProps) {
+export default function ProfileDrawer({ isOpen, onClose, user }: ProfileDrawerProps) {
   const router = useRouter()
-  const { totalItems } = useCart()
+  // const { totalItems } = useCart()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'المستخدم'
 
@@ -36,8 +34,8 @@ export default function ProfileDrawer({ isOpen, onClose, user, isAdmin }: Profil
             <button ref={closeButtonRef} onClick={onClose} aria-label="إغلاق قائمة الحساب" className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer" aria-expanded={isOpen}>✕</button>
           </div>
           <div className="p-4 flex flex-col gap-2">
-            <Link href="/cart" onClick={onClose} aria-label={`عربة التسوق، ${totalItems} منتجات`} className="flex items-center justify-between px-4 py-3.5 bg-amber-50 rounded-2xl border border-amber-200 font-bold text-slate-900 hover:bg-amber-100 transition-colors"><div className="flex items-center gap-3"><span aria-hidden="true">🛒</span><span>عربة التسوق</span></div><span className="bg-amber-500 text-white text-xs px-3 py-1 rounded-full font-black">{totalItems} منتج</span></Link>
-            <hr className="my-1 border-gray-100" />
+            {/* <Link href="/cart" onClick={onClose} aria-label={`عربة التسوق، ${totalItems} منتجات`} className="flex items-center justify-between px-4 py-3.5 bg-amber-50 rounded-2xl border border-amber-200 font-bold text-slate-900 hover:bg-amber-100 transition-colors"><div className="flex items-center gap-3"><span aria-hidden="true">🛒</span><span>عربة التسوق</span></div><span className="bg-amber-500 text-white text-xs px-3 py-1 rounded-full font-black">{totalItems} منتج</span></Link> */}
+            {/* <hr className="my-1 border-gray-100" /> */}
             <Link href="/my-orders" onClick={onClose} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-slate-700 hover:bg-gray-100 transition-colors"><span aria-hidden="true">📦</span><span>طلباتي</span></Link>
             <Link href="/wishlist" onClick={onClose} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-slate-700 hover:bg-gray-100 transition-colors"><span aria-hidden="true">❤️</span><span>المفضلة</span></Link>
             {/* {isAdmin && <Link href="/admin" onClick={onClose} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-slate-700 hover:bg-gray-100 transition-colors"><span aria-hidden="true">⚙️</span><span>لوحة تحكم الأدمن</span></Link>} */}
