@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createCheckoutOrder, quoteCheckoutWithCoupon } from './actions'
+import { supabase } from '@/utils/supabase/client'
 
 const EGYPT_GOVERNORATES = [
 { name: 'القاهرة', fee: 60 },
@@ -61,6 +62,7 @@ const [couponQuote, setCouponQuote] = useState<{
 const [couponStatus, setCouponStatus] = useState<'idle' | 'applying' | 'applied' | 'invalid' | 'removing'>('idle')
 const [couponError, setCouponError] = useState('')
 const [isSubmitting, setIsSubmitting] = useState(false)
+const [checkoutError, setCheckoutError] = useState('')
 const [orderSuccess, setOrderSuccess] = useState(false)
 
 const [orderResult, setOrderResult] = useState<{
@@ -103,52 +105,58 @@ setFormData({
 }
 
 const handleSubmit = async (e: React.FormEvent) => {
-e.preventDefault()
+  e.preventDefault()
+  if (isSubmitting || couponStatus === 'applying' || couponStatus === 'removing') return
+  if (cart.length === 0) return
 
-if (isSubmitting || couponStatus === 'applying' || couponStatus === 'removing') return
-if (cart.length === 0) return
+  setIsSubmitting(true)
+  setCheckoutError('')
+  try {
+    const result = await createCheckoutOrder({
+      items: cart.map(({ id, quantity }) => ({
+        productId: id,
+        quantity,
+      })),
+      ...formData,
+      couponCode: appliedCouponCode ?? undefined,
+    })
 
-setIsSubmitting(true)
+    if (!result.success) {
+      setCheckoutError(result.error)
+      return
+    }
 
-try {
-  const result = await createCheckoutOrder({
-    items: cart.map(({ id, quantity }) => ({
-      productId: id,
-      quantity,
-    })),
-    ...formData,
-    couponCode: appliedCouponCode ?? undefined,
-  })
+    setOrderResult({
+      orderId: result.orderId,
+      subtotal: result.subtotal,
+      discountAmount: result.discountAmount,
+      total: result.total,
+      shippingFee: result.shippingFee,
+      couponCode: result.couponCode,
+    })
+    clearCart()
 
-  if (!result.success) {
-    throw new Error(result.error)
+    let authenticatedUserId: string | null = null
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      authenticatedUserId = user?.id ?? null
+    } catch {
+      // If the optional auth lookup fails, retain the existing immediate confirmation.
+    }
+
+    if (authenticatedUserId) {
+      router.push(`/order/${result.orderId}`)
+      return
+    }
+
+    setOrderSuccess(true)
+  } catch (error) {
+    console.error('Checkout submission failed:', error)
+    setCheckoutError('حدث خطأ أثناء إرسال الطلب. يمكنك المحاولة مرة أخرى.')
+  } finally {
+    setIsSubmitting(false)
   }
-
-  setOrderResult({
-    orderId: result.orderId,
-    subtotal: result.subtotal,
-    discountAmount: result.discountAmount,
-    total: result.total,
-    shippingFee: result.shippingFee,
-    couponCode: result.couponCode,
-  })
-
-  clearCart()
-  setOrderSuccess(true)
-} catch (error) {
-  console.error('خطأ أثناء إرسال الطلب:', error)
-
-  const errorMessage =
-    error instanceof Error
-      ? error.message
-      : 'برجاء المحاولة مرة أخرى'
-
-  alert('حدث خطأ أثناء إرسال الطلب: ' + errorMessage)
-} finally {
-  setIsSubmitting(false)
 }
-}
-
 const handleApplyCoupon = async () => {
   if (isSubmitting || couponStatus === 'applying' || couponStatus === 'removing') return
 
@@ -362,6 +370,16 @@ return (
 </h1>
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {checkoutError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-800"
+        >
+          <p>{checkoutError}</p>
+          <p className="mt-1 font-medium">يمكنك المحاولة مرة أخرى.</p>
+        </div>
+      )}
       <form
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4"
