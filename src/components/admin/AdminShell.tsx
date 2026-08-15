@@ -11,6 +11,7 @@ const mobileNavigationItems = [
   { label: 'لوحة التحكم', href: '/admin' },
   { label: 'المنتجات', href: '/admin/products' },
   { label: 'البانرات', href: '/admin/banners' },
+  { label: 'الكوبونات', href: '/admin/coupons' },
   { label: 'الطلبات', href: '/admin/orders' },
   { label: 'التصنيفات', href: '/admin/categories' },
 ]

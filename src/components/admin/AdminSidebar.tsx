@@ -7,6 +7,7 @@ const items = [
   { label: 'لوحة التحكم', href: '/admin', icon: '▧' },
   { label: 'المنتجات', href: '/admin/products', icon: '□' },
   { label: 'البانرات', href: '/admin/banners', icon: '▤' },
+  { label: 'الكوبونات', href: '/admin/coupons', icon: '◈' },
   { label: 'التصنيفات', href: '/admin/categories', icon: '◇' },
   { label: 'الطلبات', href: '/admin/orders', icon: '¤' },
 ]

@@ -4,7 +4,7 @@ import { useCart } from '@/context/CartContext'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createCheckoutOrder } from './actions'
+import { createCheckoutOrder, quoteCheckoutWithCoupon } from './actions'
 
 const EGYPT_GOVERNORATES = [
 { name: 'القاهرة', fee: 60 },
@@ -49,13 +49,27 @@ transferRef: '',
 })
 
 const [shippingFee, setShippingFee] = useState(0)
+const [couponCode, setCouponCode] = useState('')
+const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null)
+const [couponQuote, setCouponQuote] = useState<{
+  subtotal: number
+  shippingFee: number
+  discountAmount: number
+  total: number
+  couponCode: string | null
+} | null>(null)
+const [couponStatus, setCouponStatus] = useState<'idle' | 'applying' | 'applied' | 'invalid' | 'removing'>('idle')
+const [couponError, setCouponError] = useState('')
 const [isSubmitting, setIsSubmitting] = useState(false)
 const [orderSuccess, setOrderSuccess] = useState(false)
 
 const [orderResult, setOrderResult] = useState<{
 orderId: string
+subtotal?: number
+discountAmount: number
 total: number
 shippingFee: number
+couponCode: string | null
 } | null>(null)
 
 const handleGovernorateChange = (
@@ -72,6 +86,10 @@ setFormData({
 })
 
 setShippingFee(gov ? gov.fee : 0)
+setCouponQuote(null)
+setAppliedCouponCode(null)
+setCouponStatus('idle')
+setCouponError('')
 
 }
 
@@ -87,6 +105,7 @@ setFormData({
 const handleSubmit = async (e: React.FormEvent) => {
 e.preventDefault()
 
+if (isSubmitting || couponStatus === 'applying' || couponStatus === 'removing') return
 if (cart.length === 0) return
 
 setIsSubmitting(true)
@@ -98,6 +117,7 @@ try {
       quantity,
     })),
     ...formData,
+    couponCode: appliedCouponCode ?? undefined,
   })
 
   if (!result.success) {
@@ -106,8 +126,11 @@ try {
 
   setOrderResult({
     orderId: result.orderId,
+    subtotal: result.subtotal,
+    discountAmount: result.discountAmount,
     total: result.total,
     shippingFee: result.shippingFee,
+    couponCode: result.couponCode,
   })
 
   clearCart()
@@ -120,16 +143,117 @@ try {
       ? error.message
       : 'برجاء المحاولة مرة أخرى'
 
-  alert(
-    `حدث خطأ أثناء إرسال الطلب: ${errorMessage}`
-  )
+  alert('حدث خطأ أثناء إرسال الطلب: ' + errorMessage)
 } finally {
   setIsSubmitting(false)
 }
-
 }
 
-const checkoutPreviewTotal = totalPrice + shippingFee
+const handleApplyCoupon = async () => {
+  if (isSubmitting || couponStatus === 'applying' || couponStatus === 'removing') return
+
+  const normalizedCode = couponCode.trim()
+  if (!normalizedCode) {
+    setCouponStatus('invalid')
+    setCouponError('أدخل كود الخصم أولاً.')
+    setCouponQuote(null)
+    setAppliedCouponCode(null)
+    return
+  }
+  if (cart.length === 0) {
+    setCouponStatus('invalid')
+    setCouponError('لا توجد منتجات لتطبيق الكود عليها.')
+    return
+  }
+  if (!formData.governorate) {
+    setCouponStatus('invalid')
+    setCouponError('اختر المحافظة أولاً لتقييم الكود.')
+    return
+  }
+
+  setCouponStatus('applying')
+  setCouponError('')
+  try {
+    const result = await quoteCheckoutWithCoupon({
+      items: cart.map(({ id, quantity }) => ({ productId: id, quantity })),
+      governorate: formData.governorate,
+      couponCode: normalizedCode,
+    })
+    if (!result.success) {
+      setCouponQuote(null)
+      setAppliedCouponCode(null)
+      setCouponStatus('invalid')
+      setCouponError(result.error)
+      return
+    }
+    setCouponCode(result.couponCode ?? normalizedCode)
+    setAppliedCouponCode(result.couponCode ?? normalizedCode)
+    setCouponQuote(result)
+    setCouponStatus('applied')
+    setCouponError('')
+  } catch {
+    setCouponQuote(null)
+    setAppliedCouponCode(null)
+    setCouponStatus('invalid')
+    setCouponError('تعذر تطبيق كود الخصم حاليًا.')
+  }
+}
+
+const handleRemoveCoupon = async () => {
+  if (isSubmitting || couponStatus === 'applying' || couponStatus === 'removing') return
+  if (!formData.governorate || cart.length === 0) {
+    setCouponCode('')
+    setAppliedCouponCode(null)
+    setCouponQuote(null)
+    setCouponStatus('idle')
+    setCouponError('')
+    return
+  }
+
+  setCouponStatus('removing')
+  setCouponError('')
+  try {
+    const result = await quoteCheckoutWithCoupon({
+      items: cart.map(({ id, quantity }) => ({ productId: id, quantity })),
+      governorate: formData.governorate,
+      couponCode: undefined,
+    })
+    if (!result.success) {
+      setCouponQuote(null)
+      setCouponStatus('invalid')
+      setCouponError('تعذر إزالة كود الخصم حاليًا.')
+      return
+    }
+    setCouponCode('')
+    setAppliedCouponCode(null)
+    setCouponQuote(result)
+    setCouponStatus('idle')
+    setCouponError('')
+  } catch {
+    setCouponCode('')
+    setAppliedCouponCode(null)
+    setCouponQuote(null)
+    setCouponStatus('invalid')
+    setCouponError('تعذر إزالة كود الخصم حاليًا.')
+  }
+}
+
+const handleCouponInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setCouponCode(e.target.value)
+  if (couponStatus === 'applied') {
+    setAppliedCouponCode(null)
+    setCouponQuote(null)
+    setCouponStatus('idle')
+  }
+  setCouponError('')
+}
+
+const displayedSubtotal = couponQuote?.subtotal ?? totalPrice
+const displayedShippingFee = couponQuote?.shippingFee ?? shippingFee
+const displayedDiscount = couponQuote?.discountAmount ?? 0
+const displayedTotal = couponQuote?.total ?? totalPrice + shippingFee
+const couponBusy = couponStatus === 'applying' || couponStatus === 'removing'
+
 
 if (cart.length === 0 && !orderSuccess) {
   return (
@@ -346,6 +470,53 @@ return (
           </p>
         </div>
 
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <label htmlFor="couponCode" className="block text-sm font-medium text-amber-950 mb-2">
+            كود الخصم
+          </label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              id="couponCode"
+              type="text"
+              value={couponCode}
+              onChange={handleCouponInputChange}
+              disabled={isSubmitting || couponBusy}
+              autoComplete="off"
+              placeholder="أدخل كود الخصم"
+              className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-white px-4 py-2 uppercase focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-60"
+            />
+            {couponStatus === 'applied' || couponStatus === 'removing' ? (
+              <button
+                type="button"
+                onClick={handleRemoveCoupon}
+                disabled={isSubmitting || couponBusy}
+                className="rounded-xl border border-amber-300 px-4 py-2 text-sm font-bold text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {couponStatus === 'removing' ? 'جارٍ الإزالة...' : 'إزالة'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleApplyCoupon}
+                disabled={isSubmitting || couponBusy}
+                className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {couponStatus === 'applying' ? 'جارٍ التطبيق...' : 'تطبيق'}
+              </button>
+            )}
+          </div>
+          {couponStatus === 'applied' && appliedCouponCode && (
+            <p role="status" className="mt-2 text-sm font-bold text-emerald-700">
+              تم تطبيق الكود: {appliedCouponCode}
+            </p>
+          )}
+          {couponError && (
+            <p role="alert" className="mt-2 text-sm font-bold text-rose-700">
+              {couponError}
+            </p>
+          )}
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             رقم عملية التحويل أو مرجع الدفع
@@ -364,7 +535,7 @@ return (
 
         <button
           type="submit"
-          disabled={isSubmitting || shippingFee === 0}
+          disabled={isSubmitting || couponBusy || shippingFee === 0}
           className="mt-2 w-full bg-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:bg-slate-800 transition-colors shadow-lg cursor-pointer disabled:opacity-50"
         >
           {isSubmitting
@@ -403,10 +574,10 @@ return (
 
         <div className="flex flex-col gap-2 text-sm text-gray-700 mb-4 border-b border-gray-100 pb-4">
           <div className="flex justify-between">
-            <span>إجمالي المنتجات:</span>
+            <span>المجموع الفرعي:</span>
 
             <span className="font-bold">
-              {totalPrice} ج.م
+              {displayedSubtotal} ج.م
             </span>
           </div>
 
@@ -414,18 +585,27 @@ return (
             <span>رسوم الشحن:</span>
 
             <span className="font-bold text-amber-600">
-              {shippingFee} ج.م
+              {displayedShippingFee} ج.م
             </span>
           </div>
         </div>
 
+        {couponQuote && (
+          <div className="flex justify-between">
+            <span>الخصم:</span>
+            <span className="font-bold text-emerald-700">
+              {displayedDiscount > 0 ? '-' : ''}{displayedDiscount} ج.م
+            </span>
+          </div>
+        )}
+
         <div className="flex justify-between items-center text-lg font-bold">
           <span>
-            الإجمالي الكلي (شامل الشحن):
+            الإجمالي النهائي (شامل الشحن):
           </span>
 
           <span className="text-amber-600 text-2xl">
-            {checkoutPreviewTotal} ج.م
+            {displayedTotal} ج.م
           </span>
         </div>
 
