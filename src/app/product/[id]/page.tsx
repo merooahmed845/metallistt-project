@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
+import { cache } from "react";
 import { createClient } from "@/utils/supabase/server";
+import { getAbsoluteSiteUrl, getConfiguredSiteUrl } from "@/lib/seo";
 import ProductImageCarousel from "./ProductImageCarousel";
 import AddToCartButton from "./AddToCartButton";
 import Link from "next/link";
@@ -15,16 +18,56 @@ interface Review {
   created_at: string;
 }
 
-export default async function ProductPage({ params }: Props) {
-  const { id } = await params;
-
+const getProduct = cache(async (id: string) => {
   const supabase = await createClient();
-
-  const { data: product, error } = await supabase
+  return supabase
     .from("products")
     .select("*")
     .eq("id", id)
     .single();
+});
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const { data: product, error } = await getProduct(id);
+  if (error || !product) {
+    return {
+      title: "المنتج غير موجود",
+      robots: { index: false, follow: false },
+    };
+  }
+  const description = product.description?.trim() || `تفاصيل منتج ${product.title} من Metallia.`;
+  const images = Array.isArray(product.images)
+    ? product.images.filter((image: unknown): image is string => typeof image === "string" && image.length > 0)
+    : [];
+  const configuredSiteUrl = getConfiguredSiteUrl();
+  const canonical = configuredSiteUrl ? getAbsoluteSiteUrl(`/product/${id}`) : undefined;
+  return {
+    title: product.title,
+    description,
+    robots: { index: true, follow: true },
+    ...(canonical ? { alternates: { canonical } } : {}),
+    openGraph: {
+      type: "website",
+      title: product.title,
+      description,
+      ...(canonical ? { url: canonical } : {}),
+      ...(images.length > 0 ? { images } : {}),
+    },
+    twitter: {
+      card: images.length > 0 ? "summary_large_image" : "summary",
+      title: product.title,
+      description,
+      ...(images.length > 0 ? { images } : {}),
+    },
+  };
+}
+
+export default async function ProductPage({ params }: Props) {
+  const { id } = await params;
+
+  const { data: product, error } = await getProduct(id);
+  const supabase = await createClient();
 
   const { data: reviews } = await supabase
     .from("reviews")
@@ -58,12 +101,38 @@ export default async function ProductPage({ params }: Props) {
     product.sale_price !== null && product.sale_price !== undefined;
 
   const reviewList: Review[] = reviews || [];
+  const productImages = Array.isArray(product.images)
+    ? product.images.filter((image: unknown): image is string => typeof image === "string" && image.length > 0)
+    : [];
+  const currentPrice = onSale ? product.sale_price : product.price;
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    ...(product.description?.trim() ? { description: product.description.trim() } : {}),
+    ...(productImages.length > 0 ? { image: productImages } : {}),
+    ...(typeof currentPrice === "number" && Number.isFinite(currentPrice)
+      ? {
+          offers: {
+            "@type": "Offer",
+            price: currentPrice,
+            priceCurrency: "EGP",
+          },
+        }
+      : {}),
+  };
 
   return (
     <main
       dir="rtl"
       className="min-h-screen bg-gray-50 px-4 py-12 text-gray-900"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <div className="mx-auto max-w-5xl">
         <Link
           href="/"

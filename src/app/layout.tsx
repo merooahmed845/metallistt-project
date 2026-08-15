@@ -8,8 +8,32 @@ import { WishlistProvider } from '@/context/WishlistContext'
 const cairo = Cairo({ subsets: ['arabic'], weight: ['300', '400', '600', '700', '900'] })
 
 export const metadata: Metadata = {
-  title: 'Metallia - ميتاليا | متجر الإكسسوارات العصري',
+  title: {
+    default: 'Metallia - ميتاليا | متجر الإكسسوارات العصري',
+    template: '%s | Metallia - ميتاليا',
+  },
   description: 'وجهتك الأولى لأفضل المنتجات والإكسسوارات العصرية بأعلى جودة وأفضل الأسعار.',
+  applicationName: 'Metallia',
+  openGraph: {
+    type: 'website',
+    locale: 'ar_EG',
+    siteName: 'Metallia - ميتاليا',
+    title: 'Metallia - ميتاليا | متجر الإكسسوارات العصري',
+    description: 'وجهتك الأولى لأفضل المنتجات والإكسسوارات العصرية بأعلى جودة وأفضل الأسعار.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Metallia - ميتاليا | متجر الإكسسوارات العصري',
+    description: 'وجهتك الأولى لأفضل المنتجات والإكسسوارات العصرية بأعلى جودة وأفضل الأسعار.',
+  },
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

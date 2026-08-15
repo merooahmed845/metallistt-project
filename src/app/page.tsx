@@ -1,14 +1,35 @@
+import type { Metadata } from 'next'
 import { getCategories, getProducts } from '@/services/productService'
 import { getActiveBanners } from '@/services/bannerService'
 import HomepageBanner from '@/components/homepage/HomepageBanner'
+import ProductDiscovery from '@/components/homepage/ProductDiscovery'
 import Link from 'next/link'
 import Image from 'next/image'
-import AddToCartButton from './product/[id]/AddToCartButton'
-import WishlistButton from '@/components/WishlistButton'
 
-interface Category { id: string; name: string; slug: string; image_url: string | null }
-interface Product { id: string; title: string; description: string | null; price: number; sale_price: number | null; images: string[] | null }
+type Category = {
+  id: string
+  name: string
+  slug: string
+  image_url?: string | null
+}
 
+type Product = {
+  id: string
+  title: string
+  description: string | null
+  price: number
+  sale_price: number | null
+  images: string[] | null
+}
+
+export const metadata: Metadata = {
+  title: 'Metallia - ميتاليا | متجر الإكسسوارات العصري',
+  description: 'وجهتك الأولى لأفضل المنتجات والإكسسوارات العصرية بأعلى جودة وأفضل الأسعار.',
+  robots: {
+    index: true,
+    follow: true,
+  },
+}
 export default async function Home() {
   const categories: Category[] = await getCategories()
   const products: Product[] = await getProducts()
@@ -77,60 +98,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="products" className="mx-auto max-w-7xl px-4 py-12">
-        <h2 className="mb-6 text-2xl font-bold md:text-3xl">أحدث المنتجات</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {products.length ? (
-            products.map((product, index) => {
-              const image = product.images?.[0]
-              const sale = product.sale_price !== null && product.sale_price !== undefined
-              return (
-                <article key={product.id} className="flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-                  <Link
-                    href={`/product/${product.id}`}
-                    className="relative flex aspect-[4/3] items-center justify-center bg-gray-200 text-gray-400"
-                  >
-                    {image?.startsWith('http') ? (
-                      <Image
-                        src={image}
-                        alt={product.title}
-                        fill
-                        priority={index === 0}
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-contain"
-                      />
-                    ) : (
-                      <span>صورة المنتج</span>
-                    )}
-                  </Link>
-                  <div className="flex flex-1 flex-col p-4">
-                    <div className="mb-2 flex items-start justify-between gap-2">
-                      <Link href={`/product/${product.id}`}>
-                        <h3 className="text-lg font-bold hover:text-amber-600">{product.title}</h3>
-                      </Link>
-                      <WishlistButton product={{ ...product, sale_price: product.sale_price }} />
-                    </div>
-                    <p className="mb-4 line-clamp-2 text-sm text-gray-600">
-                      {product.description || 'لا يوجد وصف متاح.'}
-                    </p>
-                    <div className="mt-auto flex items-center justify-between gap-2">
-                      <div>
-                        <span className="font-bold text-amber-600">{sale ? product.sale_price : product.price} ج.م</span>
-                        {sale && (
-                          <span className="mr-2 text-sm text-gray-400 line-through">{product.price} ج.م</span>
-                        )}
-                      </div>
-                      <AddToCartButton product={product} />
-                    </div>
-                  </div>
-                </article>
-              )
-            })
-          ) : (
-            <p className="col-span-full text-center text-gray-500">لا توجد منتجات مضافة حالياً.</p>
-          )}
-        </div>
-      </section>
+      <ProductDiscovery products={products} />
     </div>
   )
 }
