@@ -1,0 +1,25 @@
+name: Weekly DB Backup
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Export all tables as JSON
+        env:
+          SUPABASE_URL: https://brjpdowqjicdyffnymii.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          mkdir -p backup
+          for t in products categories orders order_items reviews coupons coupon_redemptions homepage_banners profiles; do
+            curl -fsS "$SUPABASE_URL/rest/v1/$t?select=*" -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -o "backup/$t.json"
+            echo "$t: $(wc -c < backup/$t.json) bytes"
+          done
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: backup/
+          retention-days: 90
