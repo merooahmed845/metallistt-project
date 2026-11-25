@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
+import { STORE } from '@/config/store'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -122,7 +123,7 @@ export default async function OrderConfirmationPage({
           )}
 
           <a
-            href={`https://wa.me/201153079807?text=${encodeURIComponent(whatsappText)}`}
+            href={`https://wa.me/${STORE.whatsappNumber}?text=${encodeURIComponent(whatsappText)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-6 block w-full rounded-xl bg-green-600 px-6 py-3 text-center font-bold text-white hover:bg-green-700"
