@@ -108,7 +108,7 @@ export default function CartPage() {
           </div>
           <Link
             href="/checkout"
-            className="w-full md:w-auto bg-slate-900 text-white font-bold px-8 py-3 rounded-xl hover:bg-slate-800 transition-colors shadow-lg text-center cursor-pointer inline-block"
+            className="w-full md:w-auto bg-amber-500 text-slate-950 font-bold px-8 py-3 rounded-xl hover:bg-amber-400 transition-colors shadow-lg text-center cursor-pointer inline-block"
           >
             إتمام الطلب
           </Link>
