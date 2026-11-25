@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
+import type { CSSProperties } from 'react'
 import { Cairo } from 'next/font/google'
 import './globals.css'
 import { CartProvider } from '@/context/CartContext'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { STORE } from '@/config/store'
 import { WishlistProvider } from '@/context/WishlistContext'
 
 const cairo = Cairo({ subsets: ['arabic'], weight: ['300', '400', '600', '700', '900'] })
@@ -38,7 +40,7 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="ar" dir="rtl"><body className={`${cairo.className} antialiased bg-gray-50 text-gray-900`}>
+  return <html lang="ar" dir="rtl"><body className={`${cairo.className} antialiased bg-gray-50 text-gray-900`} style={{ '--brand': STORE.brand.primary, '--accent': STORE.brand.accent } as CSSProperties}>
     <CartProvider><WishlistProvider><Navbar />{children}<Footer /></WishlistProvider></CartProvider>
-</body></html>
+  </body></html>
 }
