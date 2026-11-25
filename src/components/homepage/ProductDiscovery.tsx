@@ -74,7 +74,7 @@ export default function ProductDiscovery({ products }: ProductDiscoveryProps) {
               <article key={product.id} className="flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
                 <Link
                   href={`/product/${product.id}`}
-                  className="relative flex aspect-[4/3] items-center justify-center bg-gray-200 text-gray-400"
+                  className="relative flex aspect-[4/3] items-center justify-center bg-white text-gray-400"
                 >
                   {image?.startsWith('http') ? (
                     <Image
