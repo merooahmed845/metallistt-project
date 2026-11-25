@@ -44,7 +44,7 @@ export default function Navbar() {
         {/* Brand & Admin Link */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <Link href="/" className="flex items-center gap-1.5 font-black text-sm sm:text-xl text-slate-900 whitespace-nowrap">
-            <Image src="/logo.png" alt={STORE.name} width={60} height={60} className="h-7 w-auto sm:h-9" />
+            <Image src="/logo.png" alt={STORE.name} width={463} height={512} className="h-9 w-auto sm:h-11" />
             <span>{STORE.name} - {STORE.nameAr}</span>
           </Link>
 
