@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createCheckoutOrder, quoteCheckoutWithCoupon } from './actions'
 import { supabase } from '@/utils/supabase/client'
+import { STORE } from '@/config/store'
 
 const EGYPT_GOVERNORATES = [
 { name: 'القاهرة', fee: 60 },
@@ -321,7 +322,7 @@ return (
       </div>
 
             <a
-        href={`https://wa.me/201153079807?text=${encodeURIComponent(`طلب تحويل — Metallia
+        href={`https://wa.me/${STORE.whatsappNumber}?text=${encodeURIComponent(`طلب تحويل — Metallia
 رقم الطلب: ${orderResult.orderId}
 الاسم: ${formData.fullName}
 الهاتف: ${formData.phone}
