@@ -1,0 +1,11 @@
+name: Keep Supabase Alive (backup ping)
+on:
+  schedule:
+    - cron: '0 7 */3 * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: curl -fsS https://metallia.vercel.app/api/health || curl -fsS https://metallia.vercel.app/
