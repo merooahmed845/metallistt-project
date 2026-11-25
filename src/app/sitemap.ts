@@ -6,10 +6,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getGeneratedSiteUrl()
   if (!siteUrl) return []
 
-  const [categories, products] = await Promise.all([
+  const [categoriesRaw, productsRaw] = await Promise.all([
     getCategories(),
     getProducts(),
   ])
+  const categories = categoriesRaw ?? []
+  const products = productsRaw ?? []
 
   return [
     { url: new URL('/', siteUrl).toString(), changeFrequency: 'weekly', priority: 1 },
