@@ -132,7 +132,7 @@ export default function MyOrdersPage() {
         ) : orders.length === 0 ? (
           <div className="bg-white p-12 rounded-3xl text-center border border-gray-100 shadow-xs flex flex-col items-center gap-4">
             <p className="text-slate-600 font-bold">ليس لديك أي طلبات مسجلة حتى الآن.</p>
-            <Link href="/" className="bg-amber-500 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-amber-600 transition-colors shadow-sm">
+            <Link href="/" className="bg-amber-500 text-slate-950 px-6 py-3 rounded-xl font-bold text-sm hover:bg-amber-400 transition-colors shadow-sm">
               ابدأ التسوق الآن
             </Link>
           </div>
