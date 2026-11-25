@@ -32,7 +32,8 @@ export default function HomepageBanner({ banner }: HomepageBannerProps) {
           sizes="(max-width: 640px) 100vw, (max-width: 1280px) 100vw, 1280px"
           className={`${desktopClass} object-cover`}
         />
-        <div className="absolute inset-0 bg-gradient-to-l from-slate-950/80 via-slate-950/35 to-transparent" />
+        <div className="absolute inset-0 bg-slate-950/25" />
+        <div className="absolute inset-0 bg-gradient-to-l from-slate-950/85 via-slate-950/55 to-slate-950/10" />
         <div className="relative z-10 flex h-full max-w-xl flex-col justify-center p-4 sm:p-10 lg:p-14 text-white">
           {banner.title ? (
             <h1 className="text-lg font-extrabold leading-tight sm:text-4xl lg:text-5xl drop-shadow-md">
@@ -40,7 +41,7 @@ export default function HomepageBanner({ banner }: HomepageBannerProps) {
             </h1>
           ) : null}
           {banner.body ? (
-            <p className="mt-1.5 sm:mt-4 max-w-lg text-xs sm:text-base leading-snug sm:leading-7 text-slate-100 line-clamp-2">
+            <p className="mt-1.5 sm:mt-4 max-w-lg text-xs sm:text-base leading-snug sm:leading-7 text-white font-semibold drop-shadow-md line-clamp-2">
               {banner.body}
             </p>
           ) : null}
