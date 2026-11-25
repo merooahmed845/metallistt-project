@@ -518,7 +518,7 @@ return (
                 type="button"
                 onClick={handleApplyCoupon}
                 disabled={isSubmitting || couponBusy}
-                className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {couponStatus === 'applying' ? 'جارٍ التطبيق...' : 'تطبيق'}
               </button>
@@ -555,7 +555,7 @@ return (
         <button
           type="submit"
           disabled={isSubmitting || couponBusy || shippingFee === 0}
-          className="mt-2 w-full bg-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:bg-slate-800 transition-colors shadow-lg cursor-pointer disabled:opacity-50"
+          className="mt-2 w-full bg-amber-500 text-slate-950 font-bold py-3 px-6 rounded-xl hover:bg-amber-400 transition-colors shadow-lg cursor-pointer disabled:opacity-50"
         >
           {isSubmitting
             ? 'جاري حفظ الطلب...'
