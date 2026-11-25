@@ -11,11 +11,11 @@ export const STORE = {
   locale: 'ar-EG',
 
   // رقم الواتساب اللي بيستلم تأكيدات الطلبات (بصيغة دولية من غير +)
-  whatsappNumber: '', // TODO: حط الرقم هنا — مثال: '2010xxxxxxxx'
+  whatsappNumber: '201153079807',
 
   // روابط السوشيال (اختياري)
   social: {
-    facebook: '',
+    facebook: 'https://www.facebook.com/profile.php?id=100071341598515',
     instagram: '',
   },
 
